@@ -250,8 +250,8 @@ receivers and conform with typical RTCMv3 GNSS observations.
                      LFloat64('snr'),
                      ULInt16('lock_counter'),
                      Struct('sid', GnssSignal._parser),
-                     OptionalGreedyRange(LFloat64('sat_pos')),
-                     OptionalGreedyRange(LFloat64('sat_vel')),))
+                     Struct('sat_pos', Array(3, LFloat64('sat_pos'))),
+                     Struct('sat_vel', Array(3, LFloat64('sat_vel'))),))
   __slots__ = [
                'P',
                'L',

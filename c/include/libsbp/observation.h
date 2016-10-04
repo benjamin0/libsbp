@@ -115,8 +115,8 @@ typedef struct __attribute__((packed)) {
   double snr;             /**< Signal to noise ratio [dB] */
   u16 lock_counter;    /**< Lock counter. */
   sbp_gnss_signal_t sid;             /**< GNSS signal identifier */
-  double sat_pos[0];      /**< Satellite position [meters] */
-  double sat_vel[0];      /**< Satellite velocity [meters/second] */
+  double sat_pos[3];      /**< Satellite position [meters] */
+  double sat_vel[3];      /**< Satellite velocity [meters/second] */
 } packed_sdiff_content_t;
 
 
