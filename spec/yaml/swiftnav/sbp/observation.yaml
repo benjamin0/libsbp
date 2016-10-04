@@ -149,11 +149,13 @@ definitions:
             desc: GNSS signal identifier
         - sat_pos:
             type: array
+            size: 3
             fill: double
             units: meters
             desc: Satellite position
         - sat_vel:
             type: array
+            size: 3
             fill: double
             units: meters/second
             desc: Satellite velocity
