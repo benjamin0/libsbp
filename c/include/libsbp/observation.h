@@ -43,7 +43,7 @@ typedef struct __attribute__((packed)) {
  *
  * Carrier phase measurement in cycles represented as a 40-bit
  * fixed point number with Q32.8 layout, i.e. 32-bits of whole
- * cycles and 8-bits of fractional cycles.  This phase has the 
+ * cycles and 8-bits of fractional cycles.  This phase has the
  * same sign as the pseudorange.
  */
 typedef struct __attribute__((packed)) {
@@ -68,8 +68,8 @@ counter (ith packet of n)
 /** GPS observations for a particular satellite signal.
  *
  * Pseudorange and carrier phase observation for a satellite being
- * tracked. The observations should be interoperable with 3rd party 
- * receivers and conform with typical RTCMv3 GNSS observations. 
+ * tracked. The observations should be interoperable with 3rd party
+ * receivers and conform with typical RTCMv3 GNSS observations.
  */
 typedef struct __attribute__((packed)) {
   u32 P;       /**< Pseudorange observation [2 cm] */
@@ -89,9 +89,9 @@ carrier phase ambiguity may have changed.
  * carrier phase observations for the satellites being tracked by
  * the device. Carrier phase observation here is represented as a
  * 40-bit fixed point number with Q32.8 layout (i.e. 32-bits of
- * whole cycles and 8-bits of fractional cycles).  The observations 
- * should be interoperable with 3rd party receivers and conform 
- * with typical RTCMv3 GNSS observations. 
+ * whole cycles and 8-bits of fractional cycles).  The observations
+ * should be interoperable with 3rd party receivers and conform
+ * with typical RTCMv3 GNSS observations.
  */
 #define SBP_MSG_OBS                  0x0049
 typedef struct __attribute__((packed)) {
@@ -100,6 +100,37 @@ typedef struct __attribute__((packed)) {
 satellite being tracked.
  */
 } msg_obs_t;
+
+
+/** GPS single differenced observation for a particular satellite signal.
+ *
+ * Single differenced pseudorange and carrier phase observation for a satellite being
+ * tracked. The observations should be interoperable with 3rd party
+ * receivers and conform with typical RTCMv3 GNSS observations.
+ */
+typedef struct __attribute__((packed)) {
+  u32 P;               /**< Pseudorange observation [2 cm] */
+  carrier_phase_t L;               /**< Carrier phase observation with typical sign convention. [cycles] */
+  double doppler;         /**< Doppler frequency [Hertz] */
+  double snr;             /**< Signal to noise ratio [dB] */
+  u16 lock_counter;    /**< Lock counter. */
+  sbp_gnss_signal_t sid;             /**< GNSS signal identifier */
+  double sat_pos[0];      /**< Satellite position [meters] */
+  double sat_vel[0];      /**< Satellite velocity [meters/second] */
+} packed_sdiff_content_t;
+
+
+/** GPS Single Differenced Observation
+ *
+ * An sdiff.
+ */
+#define SBP_MSG_SDIFF                0x0042
+typedef struct __attribute__((packed)) {
+  observation_header_t header;    /**< Header of a GPS observation message */
+  packed_sdiff_content_t obs[0];    /**< Single differenced pseudorange and carrier phase observation for a
+signal being tracked.
+ */
+} msg_sdiff_t;
 
 
 /** Base station position
@@ -432,11 +463,11 @@ satellite being tracked.
 
 /** Deprecated
  *
- * This observation message has been deprecated in favor of 
+ * This observation message has been deprecated in favor of
  * observations that are more interoperable. This message
- * should be used for observations referenced to 
+ * should be used for observations referenced to
  * a nominal pseudorange which are not interoperable with
- * most 3rd party GNSS receievers or typical RTCMv3 
+ * most 3rd party GNSS receievers or typical RTCMv3
  * observations.
  */
 #define SBP_MSG_OBS_DEP_B            0x0043

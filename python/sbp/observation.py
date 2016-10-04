@@ -72,7 +72,7 @@ class CarrierPhase(object):
   
   Carrier phase measurement in cycles represented as a 40-bit
 fixed point number with Q32.8 layout, i.e. 32-bits of whole
-cycles and 8-bits of fractional cycles.  This phase has the 
+cycles and 8-bits of fractional cycles.  This phase has the
 same sign as the pseudorange.
 
   
@@ -158,8 +158,8 @@ class PackedObsContent(object):
   """PackedObsContent.
   
   Pseudorange and carrier phase observation for a satellite being
-tracked. The observations should be interoperable with 3rd party 
-receivers and conform with typical RTCMv3 GNSS observations. 
+tracked. The observations should be interoperable with 3rd party
+receivers and conform with typical RTCMv3 GNSS observations.
 
   
   Parameters
@@ -214,6 +214,79 @@ carrier phase ambiguity may have changed.
   def to_binary(self):
     d = dict([(k, getattr(obj, k)) for k in self.__slots__])
     return PackedObsContent.build(d)
+    
+class PackedSdiffContent(object):
+  """PackedSdiffContent.
+  
+  Single differenced pseudorange and carrier phase observation for a satellite being
+tracked. The observations should be interoperable with 3rd party
+receivers and conform with typical RTCMv3 GNSS observations.
+
+  
+  Parameters
+  ----------
+  P : int
+    Pseudorange observation
+  L : CarrierPhase
+    Carrier phase observation with typical sign convention.
+  doppler : double
+    Doppler frequency
+  snr : double
+    Signal to noise ratio
+  lock_counter : int
+    Lock counter.
+  sid : GnssSignal
+    GNSS signal identifier
+  sat_pos : array
+    Satellite position
+  sat_vel : array
+    Satellite velocity
+
+  """
+  _parser = Embedded(Struct("PackedSdiffContent",
+                     ULInt32('P'),
+                     Struct('L', CarrierPhase._parser),
+                     LFloat64('doppler'),
+                     LFloat64('snr'),
+                     ULInt16('lock_counter'),
+                     Struct('sid', GnssSignal._parser),
+                     OptionalGreedyRange(LFloat64('sat_pos')),
+                     OptionalGreedyRange(LFloat64('sat_vel')),))
+  __slots__ = [
+               'P',
+               'L',
+               'doppler',
+               'snr',
+               'lock_counter',
+               'sid',
+               'sat_pos',
+               'sat_vel',
+              ]
+
+  def __init__(self, payload=None, **kwargs):
+    if payload:
+      self.from_binary(payload)
+    else:
+      self.P = kwargs.pop('P')
+      self.L = kwargs.pop('L')
+      self.doppler = kwargs.pop('doppler')
+      self.snr = kwargs.pop('snr')
+      self.lock_counter = kwargs.pop('lock_counter')
+      self.sid = kwargs.pop('sid')
+      self.sat_pos = kwargs.pop('sat_pos')
+      self.sat_vel = kwargs.pop('sat_vel')
+
+  def __repr__(self):
+    return fmt_repr(self)
+  
+  def from_binary(self, d):
+    p = PackedSdiffContent._parser.parse(d)
+    for n in self.__class__.__slots__:
+      setattr(self, n, getattr(p, n))
+
+  def to_binary(self):
+    d = dict([(k, getattr(obj, k)) for k in self.__slots__])
+    return PackedSdiffContent.build(d)
     
 class EphemerisCommonContent(object):
   """EphemerisCommonContent.
@@ -454,9 +527,9 @@ class MsgObs(SBP):
 carrier phase observations for the satellites being tracked by
 the device. Carrier phase observation here is represented as a
 40-bit fixed point number with Q32.8 layout (i.e. 32-bits of
-whole cycles and 8-bits of fractional cycles).  The observations 
-should be interoperable with 3rd party receivers and conform 
-with typical RTCMv3 GNSS observations. 
+whole cycles and 8-bits of fractional cycles).  The observations
+should be interoperable with 3rd party receivers and conform
+with typical RTCMv3 GNSS observations.
 
 
   Parameters
@@ -531,6 +604,94 @@ satellite being tracked.
   def to_json_dict(self):
     self.to_binary()
     d = super( MsgObs, self).to_json_dict()
+    j = walk_json_dict(exclude_fields(self))
+    d.update(j)
+    return d
+    
+SBP_MSG_SDIFF = 0x0042
+class MsgSdiff(SBP):
+  """SBP class for message MSG_SDIFF (0x0042).
+
+  You can have MSG_SDIFF inherit its fields directly
+  from an inherited SBP object, or construct it inline using a dict
+  of its fields.
+
+  
+  An sdiff.
+
+
+  Parameters
+  ----------
+  sbp : SBP
+    SBP parent object to inherit from.
+  header : ObservationHeader
+    Header of a GPS observation message
+  obs : array
+    Single differenced pseudorange and carrier phase observation for a
+signal being tracked.
+
+  sender : int
+    Optional sender ID, defaults to SENDER_ID (see sbp/msg.py).
+
+  """
+  _parser = Struct("MsgSdiff",
+                   Struct('header', ObservationHeader._parser),
+                   OptionalGreedyRange(Struct('obs', PackedSdiffContent._parser)),)
+  __slots__ = [
+               'header',
+               'obs',
+              ]
+
+  def __init__(self, sbp=None, **kwargs):
+    if sbp:
+      super( MsgSdiff,
+             self).__init__(sbp.msg_type, sbp.sender, sbp.length,
+                            sbp.payload, sbp.crc)
+      self.from_binary(sbp.payload)
+    else:
+      super( MsgSdiff, self).__init__()
+      self.msg_type = SBP_MSG_SDIFF
+      self.sender = kwargs.pop('sender', SENDER_ID)
+      self.header = kwargs.pop('header')
+      self.obs = kwargs.pop('obs')
+
+  def __repr__(self):
+    return fmt_repr(self)
+
+  @staticmethod
+  def from_json(s):
+    """Given a JSON-encoded string s, build a message object.
+
+    """
+    d = json.loads(s)
+    return MsgSdiff.from_json_dict(d)
+
+  @staticmethod
+  def from_json_dict(d):
+    sbp = SBP.from_json_dict(d)
+    return MsgSdiff(sbp, **d)
+
+ 
+  def from_binary(self, d):
+    """Given a binary payload d, update the appropriate payload fields of
+    the message.
+
+    """
+    p = MsgSdiff._parser.parse(d)
+    for n in self.__class__.__slots__:
+      setattr(self, n, getattr(p, n))
+
+  def to_binary(self):
+    """Produce a framed/packed SBP message.
+
+    """
+    c = containerize(exclude_fields(self))
+    self.payload = MsgSdiff._parser.build(c)
+    return self.pack()
+
+  def to_json_dict(self):
+    self.to_binary()
+    d = super( MsgSdiff, self).to_json_dict()
     j = walk_json_dict(exclude_fields(self))
     d.update(j)
     return d
@@ -2096,11 +2257,11 @@ class MsgObsDepB(SBP):
   of its fields.
 
   
-  This observation message has been deprecated in favor of 
+  This observation message has been deprecated in favor of
 observations that are more interoperable. This message
-should be used for observations referenced to 
+should be used for observations referenced to
 a nominal pseudorange which are not interoperable with
-most 3rd party GNSS receievers or typical RTCMv3 
+most 3rd party GNSS receievers or typical RTCMv3
 observations.
 
 
@@ -2489,6 +2650,7 @@ LSB indicating tgd validity etc.
 
 msg_classes = {
   0x0049: MsgObs,
+  0x0042: MsgSdiff,
   0x0044: MsgBasePosLLH,
   0x0048: MsgBasePosECEF,
   0x0081: MsgEphemerisGPS,
