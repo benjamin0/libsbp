@@ -160,16 +160,24 @@ definitions:
             units: meters/second
             desc: Satellite velocity
 
- - MSG_SDIFF:
+ - MSG_FILTER_INPUT:
     id: 0x0042
     short_desc: GPS Single Differenced Observation
     desc: |
-      An sdiff.
+      Filter input
     fields:
         - header:
             type: ObservationHeader
             desc: Header of a GPS observation message
-        - obs:
+        - rover_pos:
+            type: array
+            size: 3
+            fill: double
+            units: meters
+            desc: Rover position
+        - obs_time:
+            type: ObsGPSTime
+        - sdiffs:
             type: array
             fill: PackedSdiffContent
             map_by: sid

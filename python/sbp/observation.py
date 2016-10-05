@@ -608,16 +608,16 @@ satellite being tracked.
     d.update(j)
     return d
     
-SBP_MSG_SDIFF = 0x0042
-class MsgSdiff(SBP):
-  """SBP class for message MSG_SDIFF (0x0042).
+SBP_MSG_FILTER_INPUT = 0x0042
+class MsgFilterInput(SBP):
+  """SBP class for message MSG_FILTER_INPUT (0x0042).
 
-  You can have MSG_SDIFF inherit its fields directly
+  You can have MSG_FILTER_INPUT inherit its fields directly
   from an inherited SBP object, or construct it inline using a dict
   of its fields.
 
   
-  An sdiff.
+  Filter input
 
 
   Parameters
@@ -626,7 +626,10 @@ class MsgSdiff(SBP):
     SBP parent object to inherit from.
   header : ObservationHeader
     Header of a GPS observation message
-  obs : array
+  rover_pos : array
+    Rover position
+  obs_time : ObsGPSTime
+  sdiffs : array
     Single differenced pseudorange and carrier phase observation for a
 signal being tracked.
 
@@ -634,26 +637,32 @@ signal being tracked.
     Optional sender ID, defaults to SENDER_ID (see sbp/msg.py).
 
   """
-  _parser = Struct("MsgSdiff",
+  _parser = Struct("MsgFilterInput",
                    Struct('header', ObservationHeader._parser),
-                   OptionalGreedyRange(Struct('obs', PackedSdiffContent._parser)),)
+                   Struct('rover_pos', Array(3, LFloat64('rover_pos'))),
+                   Struct('obs_time', ObsGPSTime._parser),
+                   OptionalGreedyRange(Struct('sdiffs', PackedSdiffContent._parser)),)
   __slots__ = [
                'header',
-               'obs',
+               'rover_pos',
+               'obs_time',
+               'sdiffs',
               ]
 
   def __init__(self, sbp=None, **kwargs):
     if sbp:
-      super( MsgSdiff,
+      super( MsgFilterInput,
              self).__init__(sbp.msg_type, sbp.sender, sbp.length,
                             sbp.payload, sbp.crc)
       self.from_binary(sbp.payload)
     else:
-      super( MsgSdiff, self).__init__()
-      self.msg_type = SBP_MSG_SDIFF
+      super( MsgFilterInput, self).__init__()
+      self.msg_type = SBP_MSG_FILTER_INPUT
       self.sender = kwargs.pop('sender', SENDER_ID)
       self.header = kwargs.pop('header')
-      self.obs = kwargs.pop('obs')
+      self.rover_pos = kwargs.pop('rover_pos')
+      self.obs_time = kwargs.pop('obs_time')
+      self.sdiffs = kwargs.pop('sdiffs')
 
   def __repr__(self):
     return fmt_repr(self)
@@ -664,12 +673,12 @@ signal being tracked.
 
     """
     d = json.loads(s)
-    return MsgSdiff.from_json_dict(d)
+    return MsgFilterInput.from_json_dict(d)
 
   @staticmethod
   def from_json_dict(d):
     sbp = SBP.from_json_dict(d)
-    return MsgSdiff(sbp, **d)
+    return MsgFilterInput(sbp, **d)
 
  
   def from_binary(self, d):
@@ -677,7 +686,7 @@ signal being tracked.
     the message.
 
     """
-    p = MsgSdiff._parser.parse(d)
+    p = MsgFilterInput._parser.parse(d)
     for n in self.__class__.__slots__:
       setattr(self, n, getattr(p, n))
 
@@ -686,12 +695,12 @@ signal being tracked.
 
     """
     c = containerize(exclude_fields(self))
-    self.payload = MsgSdiff._parser.build(c)
+    self.payload = MsgFilterInput._parser.build(c)
     return self.pack()
 
   def to_json_dict(self):
     self.to_binary()
-    d = super( MsgSdiff, self).to_json_dict()
+    d = super( MsgFilterInput, self).to_json_dict()
     j = walk_json_dict(exclude_fields(self))
     d.update(j)
     return d
@@ -2650,7 +2659,7 @@ LSB indicating tgd validity etc.
 
 msg_classes = {
   0x0049: MsgObs,
-  0x0042: MsgSdiff,
+  0x0042: MsgFilterInput,
   0x0044: MsgBasePosLLH,
   0x0048: MsgBasePosECEF,
   0x0081: MsgEphemerisGPS,
