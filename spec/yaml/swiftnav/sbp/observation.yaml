@@ -175,8 +175,6 @@ definitions:
             fill: double
             units: meters
             desc: Rover position
-        - obs_time:
-            type: ObsGPSTime
         - sdiffs:
             type: array
             fill: PackedSdiffContent

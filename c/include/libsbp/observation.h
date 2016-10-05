@@ -128,7 +128,6 @@ typedef struct __attribute__((packed)) {
 typedef struct __attribute__((packed)) {
   observation_header_t header;       /**< Header of a GPS observation message */
   double rover_pos[3]; /**< Rover position [meters] */
-  obs_gps_time_t obs_time;
   packed_sdiff_content_t sdiffs[0];    /**< Single differenced pseudorange and carrier phase observation for a
 signal being tracked.
  */
@@ -490,14 +489,14 @@ satellite being tracked.
 #define SBP_MSG_IONO                 0x0090
 typedef struct __attribute__((packed)) {
   obs_gps_time_t t_nmct;    /**< Navigation Message Correction Table Valitidy Time */
-  double a0;
-  double a1;
-  double a2;
-  double a3;
-  double b0;
-  double b1;
-  double b2;
-  double b3;
+  double a0;       
+  double a1;       
+  double a2;       
+  double a3;       
+  double b0;       
+  double b1;       
+  double b2;       
+  double b3;       
 } msg_iono_t;
 
 
@@ -524,9 +523,9 @@ typedef struct __attribute__((packed)) {
 LSB indicating tgd validity etc.
 1 = value is valid, 0 = value is not valid.
  */
-  s16 tgd;
-  s16 isc_l1ca;
-  s16 isc_l2c;
+  s16 tgd;        
+  s16 isc_l1ca;   
+  s16 isc_l2c;    
 } msg_group_delay_t;
 
 

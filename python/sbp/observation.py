@@ -628,7 +628,6 @@ class MsgFilterInput(SBP):
     Header of a GPS observation message
   rover_pos : array
     Rover position
-  obs_time : ObsGPSTime
   sdiffs : array
     Single differenced pseudorange and carrier phase observation for a
 signal being tracked.
@@ -640,12 +639,10 @@ signal being tracked.
   _parser = Struct("MsgFilterInput",
                    Struct('header', ObservationHeader._parser),
                    Struct('rover_pos', Array(3, LFloat64('rover_pos'))),
-                   Struct('obs_time', ObsGPSTime._parser),
                    OptionalGreedyRange(Struct('sdiffs', PackedSdiffContent._parser)),)
   __slots__ = [
                'header',
                'rover_pos',
-               'obs_time',
                'sdiffs',
               ]
 
@@ -661,7 +658,6 @@ signal being tracked.
       self.sender = kwargs.pop('sender', SENDER_ID)
       self.header = kwargs.pop('header')
       self.rover_pos = kwargs.pop('rover_pos')
-      self.obs_time = kwargs.pop('obs_time')
       self.sdiffs = kwargs.pop('sdiffs')
 
   def __repr__(self):
