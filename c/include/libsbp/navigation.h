@@ -34,6 +34,21 @@
 #define LIBSBP_NAVIGATION_MESSAGES_H
 
 #include "common.h"
+#include "gnss.h"
+
+
+/** GNSS Acquisition assistance
+ *
+ * Assists in GNSS acquisition.
+ */
+#define SBP_MSG_ASSISTANCE             0x0100
+typedef struct __attribute__((packed)) {
+  gps_time_nano_t time;        /**< Coarse GNSS time */
+  double lat;         /**< Coarse latitude [degrees] */
+  double lon;         /**< Coarse longitude [degrees] */
+  double alt;         /**< Coarse altitude [m] */
+  double accuracy;    /**< Accuracy of coarse position [m] */
+} msg_assistance_t;
 
 
 /** GPS Time

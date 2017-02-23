@@ -25,7 +25,34 @@ stable: True
 public: True
 include:
   - types.yaml
+  - gnss.yaml
 definitions:
+
+ - MSG_ASSISTANCE:
+    id: 0x0100
+    short_desc: GNSS Acquisition assistance
+    desc: |
+      Assists in GNSS acquisition.
+    fields:
+        - time:
+            type: GPSTimeNano
+            desc: Coarse GNSS time
+        - lat:
+            type: double
+            units: degrees
+            desc: Coarse latitude
+        - lon:
+            type: double
+            units: degrees
+            desc: Coarse longitude
+        - alt:
+            type: double
+            units: m
+            desc: Coarse altitude
+        - accuracy:
+            type: double
+            units: m
+            desc: Accuracy of coarse position
 
  - MSG_GPS_TIME:
     id: 0x0102

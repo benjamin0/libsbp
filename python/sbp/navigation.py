@@ -29,11 +29,113 @@ from construct import *
 import json
 from sbp.msg import SBP, SENDER_ID
 from sbp.utils import fmt_repr, exclude_fields, walk_json_dict, containerize, greedy_string
+from sbp.gnss import *
 
 # Automatically generated from piksi/yaml/swiftnav/sbp/navigation.yaml with generate.py.
 # Please do not hand edit!
 
 
+SBP_MSG_ASSISTANCE = 0x0100
+class MsgAssistance(SBP):
+  """SBP class for message MSG_ASSISTANCE (0x0100).
+
+  You can have MSG_ASSISTANCE inherit its fields directly
+  from an inherited SBP object, or construct it inline using a dict
+  of its fields.
+
+  
+  Assists in GNSS acquisition.
+
+
+  Parameters
+  ----------
+  sbp : SBP
+    SBP parent object to inherit from.
+  time : GPSTimeNano
+    Coarse GNSS time
+  lat : double
+    Coarse latitude
+  lon : double
+    Coarse longitude
+  alt : double
+    Coarse altitude
+  accuracy : double
+    Accuracy of coarse position
+  sender : int
+    Optional sender ID, defaults to SENDER_ID (see sbp/msg.py).
+
+  """
+  _parser = Struct("MsgAssistance",
+                   Struct('time', GPSTimeNano._parser),
+                   LFloat64('lat'),
+                   LFloat64('lon'),
+                   LFloat64('alt'),
+                   LFloat64('accuracy'),)
+  __slots__ = [
+               'time',
+               'lat',
+               'lon',
+               'alt',
+               'accuracy',
+              ]
+
+  def __init__(self, sbp=None, **kwargs):
+    if sbp:
+      super( MsgAssistance,
+             self).__init__(sbp.msg_type, sbp.sender, sbp.length,
+                            sbp.payload, sbp.crc)
+      self.from_binary(sbp.payload)
+    else:
+      super( MsgAssistance, self).__init__()
+      self.msg_type = SBP_MSG_ASSISTANCE
+      self.sender = kwargs.pop('sender', SENDER_ID)
+      self.time = kwargs.pop('time')
+      self.lat = kwargs.pop('lat')
+      self.lon = kwargs.pop('lon')
+      self.alt = kwargs.pop('alt')
+      self.accuracy = kwargs.pop('accuracy')
+
+  def __repr__(self):
+    return fmt_repr(self)
+
+  @staticmethod
+  def from_json(s):
+    """Given a JSON-encoded string s, build a message object.
+
+    """
+    d = json.loads(s)
+    return MsgAssistance.from_json_dict(d)
+
+  @staticmethod
+  def from_json_dict(d):
+    sbp = SBP.from_json_dict(d)
+    return MsgAssistance(sbp, **d)
+
+ 
+  def from_binary(self, d):
+    """Given a binary payload d, update the appropriate payload fields of
+    the message.
+
+    """
+    p = MsgAssistance._parser.parse(d)
+    for n in self.__class__.__slots__:
+      setattr(self, n, getattr(p, n))
+
+  def to_binary(self):
+    """Produce a framed/packed SBP message.
+
+    """
+    c = containerize(exclude_fields(self))
+    self.payload = MsgAssistance._parser.build(c)
+    return self.pack()
+
+  def to_json_dict(self):
+    self.to_binary()
+    d = super( MsgAssistance, self).to_json_dict()
+    j = walk_json_dict(exclude_fields(self))
+    d.update(j)
+    return d
+    
 SBP_MSG_GPS_TIME = 0x0102
 class MsgGPSTime(SBP):
   """SBP class for message MSG_GPS_TIME (0x0102).
@@ -2326,6 +2428,7 @@ preceding MSG_GPS_TIME with the matching time-of-week (tow).
     
 
 msg_classes = {
+  0x0100: MsgAssistance,
   0x0102: MsgGPSTime,
   0x0103: MsgUtcTime,
   0x0208: MsgDops,
